@@ -1,2 +1,3 @@
+import functions as g
 
-print("Welcome to Ciphertool 1.0");
+g.menu()
