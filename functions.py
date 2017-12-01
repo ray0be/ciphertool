@@ -8,9 +8,11 @@ from cramershoup import cramershoup_decrypt
 from hash import compute_hash
 from hash import check_hash
 
+
 # Efface la console
 def clear():
     os.system('cls' if os.name=='nt' else 'clear')
+
 
 # Affiche le menu
 def menu():
@@ -68,13 +70,22 @@ def menu():
     else:
         menu()
 
+
+# Permet de demander une chaine de char
+def prompt(text, default):
+    value = input(text + " [" + default + "] ")
+    if (value == ""):
+        return default
+    else:
+        return value
+
 # Permet de choisir un nom de fichier à read/write
-def chooseFilename(prompt):
+def chooseFilename(text, default):
     print("##")
 
     # Vérifie le nom de fichier
     while True:
-        filename = input(prompt)
+        filename = prompt(text, default)
 
         if re.match('^[a-zA-Z0-9_.]+$', filename):
             break
