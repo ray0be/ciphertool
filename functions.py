@@ -1,4 +1,5 @@
 import os
+import re
 
 from threefish import threefish_encrypt
 from threefish import threefish_decrypt
@@ -66,3 +67,19 @@ def menu():
 
     else:
         menu()
+
+# Permet de choisir un nom de fichier à read/write
+def chooseFilename(prompt):
+    print("##")
+
+    # Vérifie le nom de fichier
+    while True:
+        filename = input(prompt)
+
+        if re.match('^[a-zA-Z0-9_.]+$', filename):
+            break
+        else:
+            print("Bad filename. Allowed: a-z A-Z 0-9 _ .")
+
+    print("##")
+    return filename
