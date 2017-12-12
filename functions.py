@@ -44,27 +44,27 @@ def menu():
 
     # Détermination du choix de l'utilisateur
     if (choice == 1):
-        print("Vous avez choisi le chiffrement symétrique ThreeFish.")
+        print("Vous avez choisi le chiffrement symétrique ThreeFish.\n")
         threefish_encrypt.run()
 
     elif (choice == 2):
-        print("Vous avez choisi le déchiffrement ThreeFish.")
+        print("Vous avez choisi le déchiffrement ThreeFish.\n")
         threefish_decrypt.run()
 
     elif (choice == 3):
-        print("Vous avez choisi le chiffrement asymétrique Cramer-Shoup.")
+        print("Vous avez choisi le chiffrement asymétrique Cramer-Shoup.\n")
         cramershoup_encrypt.run()
 
     elif (choice == 4):
-        print("Vous avez choisi le déchiffrement de Cramer-Shoup.")
+        print("Vous avez choisi le déchiffrement de Cramer-Shoup.\n")
         cramershoup_decrypt.run()
 
     elif (choice == 5):
-        print("Vous avez choisi de créer un hash.")
+        print("Vous avez choisi de créer un hash.\n")
         compute_hash.run()
 
     elif (choice == 6):
-        print("Vous avez choisi la vérification d'un hash.")
+        print("Vous avez choisi la vérification d'un hash.\n")
         check_hash.run()
 
     else:
@@ -81,16 +81,20 @@ def prompt(text, default):
 
 # Permet de choisir un nom de fichier à read/write
 def chooseFilename(text, default):
-    print("##")
+    print("\n##")
 
     # Vérifie le nom de fichier
     while True:
         filename = prompt(text, default)
 
-        if re.match('^[a-zA-Z0-9_.]+$', filename):
+        if re.match('^[a-zA-Z0-9/_.]+$', filename):
             break
         else:
             print("Bad filename. Allowed: a-z A-Z 0-9 _ .")
 
-    print("##")
+    print("##\n")
     return filename
+
+# Découpe le fichier en différents blocs de "chunksize" octets
+def chunk_file(f, chunksize = 64):
+    return iter(lambda: f.read(chunksize), b'')
