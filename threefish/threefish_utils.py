@@ -29,17 +29,17 @@ class ThreeFish(object):
         # Master key
         if (not key or len(key) != int(blsz/8)):
             key = self.generateKey()
-        print("Base key : " + str(key))
-        print(str(len(key)) + " bytes key. (" + str(len(key)*8) + " bits)")
+        print("Clé originale : " + str(key))
+        print("Clé de " + str(len(key)) + " bytes. (" + str(len(key)*8) + " bits)")
         self.constructKeyAndTweaks(key)
-        print("Generated " + str(len(self.master_key)-1) + "+1 words key.")
         print("Master Key : " + str(self.master_key))
+        print("Mots générés : " + str(len(self.master_key) - 1) + "+1 (sous-clés)")
         print("Tweaks : " + str(self.tweak))
 
         # Round keys
         self.generateRoundKeys()
-        print("Round keys generated. (" + str(len(self.round_keys)) + ")")
-        print("Round keys : " + str(self.round_keys))
+        print("Clés de tournées générées. (" + str(len(self.round_keys)) + ")")
+        print("Clés de tournées : " + str(self.round_keys))
 
     def generateKey(self):
         return os.urandom(int(self.blocksize / 8))
