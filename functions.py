@@ -98,3 +98,9 @@ def chooseFilename(text, default):
 # Découpe le fichier en différents blocs de "chunksize" octets
 def chunk_file(f, chunksize = 64):
     return iter(lambda: f.read(chunksize), b'')
+
+# Ecrit les bytes dans un fichier
+def writeFile(filename, bytes):
+    file = open(filename, "wb")
+    file.write(bytes)
+    file.close()

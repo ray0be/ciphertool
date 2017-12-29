@@ -3,16 +3,32 @@ import functools
 import numpy as np
 from operator import xor
 
-C_constant = np.uint64(0x1BD11BDAA9FC1A22)
-
 def splitBytesInWords(key):
+    if len(key) < 64:
+        key += b'\x00' * (64-len(key))
     return np.fromstring(key, dtype=np.uint64)
+
+def joinWordsToBytes(data):
+    try:
+        return data.tostring()
+    except AttributeError:
+        return np.uint64(data).tostring()
 
 def addIn64bits(a, b):
     return np.add(a, b, dtype=np.uint64)
 
 def subIn64bits(a, b):
     return np.subtract(a, b, dtype=np.uint64)
+
+def rotateLeft64bits(n, rot):
+    mask = 2 ** 64 - 1
+    n = int(n & mask)
+    return np.uint64(((n << rot) & mask) | (n >> (64 - rot)))
+
+def rotateRight64bits(n, rot):
+    mask = 2 ** 64 - 1
+    n = int(n & mask)
+    return np.uint64((n >> rot) | ((n << (64 - rot)) & mask))
 
 #################################
 
@@ -48,7 +64,7 @@ class ThreeFish(object):
         # key
         self.master_key = splitBytesInWords(key)
         self.master_key_size = len(self.master_key)
-        final_word = functools.reduce(xor, self.master_key) ^ C_constant
+        final_word = functools.reduce(xor, self.master_key) ^ np.uint64(0x1BD11BDAA9FC1A22)
         self.master_key.resize(self.master_key_size+1)
         self.master_key[-1] = np.uint64(final_word)
 
@@ -81,8 +97,39 @@ class ThreeFish(object):
 
         self.round_keys = np.array(list)
 
-    def encryptBlock(self, plain):
-        return 1
+    def xorWordWithKey(self, words, key):
+        result = []
+        for i in range(0, len(key)):
+            result.append(np.uint64(words[i] ^ key[i]))
+        return np.array(result, dtype=np.uint64)
+
+    def encryptBlock(self, plain64):
+        state = plain64
+        keynb = 0
+
+        # 76 tournées
+        for i in range(0, 76):
+            # Ajout de la clé toutes les 4 tournées
+            if (i % 4 == 0):
+                state = self.xorWordWithKey(state, self.round_keys[keynb])
+                keynb += 1
+
+            # Substitution
+            for k in range(0, len(state)-1, 2):
+                m1 = state[k]
+                m2 = state[k+1]
+                state[k] = addIn64bits(m1, m2)
+                state[k+1] = state[k] ^ rotateLeft64bits(m2, 12)
+
+            # Permutation
+            temp = state
+            for j in range(0, len(state)):
+                state[j] = temp[len(state) - j - 1]
+
+        # Ajout final de la clé
+        state = self.xorWordWithKey(state, self.round_keys[19])
+
+        return state
 
     def decryptBlock(self, cipher):
-        return 1
+        return "1"
