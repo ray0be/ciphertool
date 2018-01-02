@@ -6,8 +6,7 @@ import binascii
 from threefish import threefish_utils as tf
 
 def run():
-    default_file = "files/test_encrypted.png"
-    filename = g.chooseFilename("Choose file to decrypt", default_file)
+    filename = g.chooseFilename("Choose file to decrypt", "")
 
     print("\n# Ouverture du fichier\n")
     print("Fichier à DÉchiffrer : ", filename)
@@ -45,6 +44,7 @@ def run():
         """
         mode = input("Mode de DÉchiffrement (ECB/CBC) : ")
         mode = mode.upper()
+        IV = None
         if (mode != 'CBC'):
             mode = "ECB"
             print("Le mode choisi est ECB.")
@@ -63,7 +63,8 @@ def run():
         chunks = g.chunk_file(f, int(blocksize/8))
         print("Les blocs sont de " + str(blocksize) + " bits.")
         print("Taille du fichier : " + str(filesize) + " bytes")
-        print("Le fichier est découpé en " + str(math.ceil(filesize / blocksize * 8)) + " blocks.")
+        nbblocks = math.ceil(filesize / blocksize * 8)
+        print("Le fichier est découpé en " + str(nbblocks) + " blocks.")
         print("Clé de déchiffrement : " + str(masterkey))
 
         """
@@ -81,7 +82,19 @@ def run():
 
         if mode == 'CBC':
             # Mode CBC pour le déchiffrement
-            print("A FAIRE")
+            last_cipher_block = tf.splitBytesInWords(IV, int(blocksize/8))
+
+            for chunk in chunks:
+                # bloc à déchiffrer
+                cipher64 = tf.splitBytesInWords(chunk, int(blocksize/8))
+
+                # déchiffrement du bloc
+                xored64 = threefish.decryptBlock(cipher64)
+
+                # xor avec le chiffré précédent
+                plain64 = threefish.xorBlockWithKey(xored64, last_cipher_block)
+                last_cipher_block = cipher64
+                plain += tf.joinWordsToBytes(plain64)
         else:
             # Mode ECB pour le déchiffrement
             for chunk in chunks:

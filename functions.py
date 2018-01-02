@@ -88,7 +88,7 @@ def chooseFilename(text, default):
     while True:
         filename = prompt(text, default)
 
-        if re.match('^[a-zA-Z0-9/_.]+$', filename):
+        if re.match('^[a-zA-Z0-9/_.-]+$', filename):
             break
         else:
             print("Bad filename. Allowed: a-z A-Z 0-9 _ .")

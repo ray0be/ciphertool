@@ -66,7 +66,20 @@ def run():
 
         if mode == 'CBC':
             # Mode CBC pour le chiffrement
-            print("A FAIRE")
+            last_cipher_block = threefish.IV
+
+            for chunk in chunks:
+                # bloc à chiffrer
+                plain64 = tf.splitBytesInWords(chunk, int(blocksize / 8))
+
+                # Xor avec le chiffré du bloc précédent
+                xored64 = threefish.xorBlockWithKey(plain64, last_cipher_block)
+
+                # Chiffrement du bloc
+                cipher64 = threefish.encryptBlock(xored64)
+                last_cipher_block = cipher64
+                cipher += tf.joinWordsToBytes(cipher64)
+
         else:
             # Mode ECB pour le chiffrement
             for chunk in chunks:
