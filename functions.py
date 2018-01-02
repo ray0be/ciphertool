@@ -79,7 +79,8 @@ def prompt(text, default):
     else:
         return value
 
-# Permet de choisir un nom de fichier à read/write
+
+# Permet de choisir un nom de fichier à lire/écrire
 def chooseFilename(text, default):
     print("\n##")
 
@@ -95,9 +96,11 @@ def chooseFilename(text, default):
     print("##\n")
     return filename
 
+
 # Découpe le fichier en différents blocs de "chunksize" octets
 def chunk_file(f, chunksize = 64):
     return iter(lambda: f.read(chunksize), b'')
+
 
 # Ecrit les bytes dans un fichier
 def writeFile(filename, bytes):
