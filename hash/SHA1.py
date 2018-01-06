@@ -23,7 +23,6 @@ class SHA1(object):
     # Pour cela, si besoin :
     #   On ajoute un bit "1" à la fin du message et on complète avec k "0" en laissant 64 bits à la fin
     #   On ecrit sur les 64 derniers bits la taille du message initial
-
         if len(message) % 64 == 0: # On verifie si la taille du message est un multiple de 512 bits (64 octets)
             return message # Si oui, on garde
 
@@ -32,16 +31,14 @@ class SHA1(object):
                            for i in range(0, 16, 2)]
 
         # On ajoute un bit à "1" (suivie de 7 bits à "0" pour faire un octet)
-
         message += bytes([0b10000000])
 
         # On ajoute k bits à "0" mais en conservant les 64 derniers bits pour ecrire la taille initiale du message
         # Pour cela il faut remplir de "0" jusqu'à 448 bits soit 56 octets
         # il faut donc len(stream) + k = 56 % 64
-
         message += bytes(((56 - len(message)) % 64))
-        # On ecrit la taille initiale sur les derniers 64 bits
 
+        # On ecrit la taille initiale sur les derniers 64 bits
         message += bytes(initial_message_lenght)
 
         return message

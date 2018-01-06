@@ -1,8 +1,8 @@
+import math
 from random import randint, randrange, getrandbits
 
-import math
-
-from SHA1 import SHA1
+import functions as g
+from hash import SHA1
 
 
 def miller_rabin(n, k=20):
@@ -30,10 +30,9 @@ def miller_rabin(n, k=20):
     return True
 
 def generate_prime_number(length=1025):
-    # On va tester si le nombre qu'on va generer est premier avec le test Miller-Rabin
+    # On va tester si le nombre (p) qu'on va generer est premier avec le test Miller-Rabin
     premier = 4
-    hope_prime = 4 # On initialise le nombre qu'on espere premier pour entrer dans la boucle
-    while not miller_rabin(hope_prime, 128):
+    while not miller_rabin(premier, 128):
         # On genere un grand entier aleatoire
         hope_prime = getrandbits(length)
         # On le convertit en bit
@@ -45,7 +44,7 @@ def generate_prime_number(length=1025):
             hope_prime = ['0']*(length-len(hope_prime)) + hope_prime  # On ajoute des '0' devant
         if len(hope_prime) > length:     # Si taille trop grande
             hope_prime = hope_prime[:length]      # On retire des valeurs
-        # On met le premier bit à 1 et le dernier à 0 (sinon il est pair eet donc non premier)
+        # On met le premier bit à 1 et le dernier à 1 (sinon il est pair eet donc non premier)
         hope_prime[0], hope_prime[len(hope_prime)-1] = '1', '1'
         premier = int(''.join(hope_prime), 2)
         # On rend non friable (p=2*q+1)
@@ -63,43 +62,61 @@ def create_generator(p, q):
     while pow(a, (p-1)//2, p) == 1 or pow(a, (p-1)//q, p) == 1:
         a = randint(0, p-1)
     return a
+
 ###########################################################################################################################
 def add_padding(stream, block_size=1024):
     """
-        Add some padding to the stream, if needed
-        The padding respect the "ISO 10126" norm (random bytes, and the last
-        bytes are the number of random bytes added for padding)
-        Args:
-            stream -- bytes -- the stream to pad
-            block_size -- int -- the size of the blocks
-        return a bytearray (the stream padded if needed)
+    Ajoute un padding au message afin d'augmenter sa taille à celle désirée '1024 bits)
     """
-    stream = bytearray(stream)
-    # calculate the number of bytes needed to store the block size
+    stream = bytearray(stream, 'utf8')
+    # calcule le nombre de bytes nécessaire au padding
     msb_index = len(str(bin(block_size)[2:]))
     padding_size_bytes = math.ceil(msb_index / 8)
-    # calculate the padding size
+    # calcule la taille du padding
     padding_size = (block_size // 8) - (len(stream) % (block_size//8))
-    # add padding (random bytes)
+    # ajout des octets aléatoires au message
     for _ in range(0, padding_size - padding_size_bytes):
         stream.append(randint(0, 255))
-    # add padding (padding size bytes)
+    # ajoute à la fin du message le nombre de bytes qui ont été ajoutés comme padding
     binary_padding_size = str(bin(padding_size)[2:]).zfill(padding_size_bytes * 8)
-
     for i in range(padding_size_bytes):
         stream.append(int(binary_padding_size[i*8:(i+1)*8], 2))
 
     return bytearray(stream)
+
+def write_list_to_file(filename, liste):
+    """
+    Transforme une liste de valeurs en string pour l'écriture simple dans un fichier
+    """
+    return g.writeFile(filename, bytes(','.join([str(valeur) for valeur in liste]), encoding='utf8'))
+
+def read_list_from_file(filename):
+    """
+    Lit le contenu du fichier et extrait la liste des valeurs
+    """
+    f = open(filename, "r")
+    content = f.read()
+    f.close()
+    return [int(v) for v in content.split(',')]
+
+def read_hex_list_from_file(filename):
+    """
+    Lit le contenu du fichier (hex numbers) et extrait la liste des valeurs
+    """
+    f = open(filename, "r")
+    content = f.read()
+    f.close()
+    return content.split(',')
 ###########################################################################################################################
 
 
-############################################################
+# Classe cramershoup pour le chiffrement / déchiffrement
 class CramerShoup(object):
     @staticmethod
     def key_generation():
     # Permet de generer les clefs : publique et privee
 
-        p = generate_prime_number # Generation d'un entier premier grand
+        p = generate_prime_number() # Generation d'un entier premier grand
         alpha1 = create_generator(p, (p-1)//2) # et de deux generateurs
         # On s'assure que les 2 generateurs sont differents
         alpha2 = alpha1
@@ -118,21 +135,30 @@ class CramerShoup(object):
         Y = (pow(alpha1, y1, p) * pow(alpha2, y2, p))
         W = pow(alpha1, w, p)
 
-        ##########################################################
-        ##########################################################
-                  ####   ECRITURE DANS FICHIER   ###
+        # clés publiques et privées
+        pub = [p, alpha1, alpha2, X, Y, W]
+        priv = [x1, x2, y1, y2, w]
+
+        # Ecriture des clés dans un fichier
+        # clé publique
+        write_list_to_file('files/cramershoup_key.pub', pub)
+        # clé privée
+        write_list_to_file('files/cramershoup_key', priv)
+
+        return 'Publique : ' + str(pub) + '\nPrivée : ' + str(priv)
 
     @staticmethod
     def _hash(b1,b2,c) :
     # Permet d'utiliser la fonction de hashage SHA1
-        return SHA1().hash(str(b1)+str(b2)+str(c))
+        chat_petit_chat = SHA1.SHA1()
+        return chat_petit_chat.hash(str(b1)+str(b2)+str(c))
 
     @staticmethod
-    def cipher(message):
+    def encrypt(message):
     # Chiffre le message
 
         # On prend la clef publique
-        p, alpha1, alpha2, X, Y, W = [int(v) for v in read_file(FILE_NAME + '.pub', 'outputs').split(',')]
+        p, alpha1, alpha2, X, Y, W = read_list_from_file('files/cramershoup_key.pub')
         # On remboure si besoin le message
         message_tab_completed = add_padding(message)
         # On genere un entier b aleatoire de Zp
@@ -155,30 +181,27 @@ class CramerShoup(object):
         beta = int(CramerShoup._hash(B1, B2, x), 16) % p
         v = (pow(X, b, p) * pow(Y, b*beta, p)) % p
 
-        # from 128 to 129 bytes
+        # Convertit c en hexa
         for i, block in enumerate(c):
             c[i] = hex(block)[2:]
-            # add leading 0 if needed, to create a block of 129 bytes (258 hex digits)
+            # ajoute un padding au bloc chiffré si besoin
             c[i] = '0'*(258 - len(c[i])) + c[i]
 
         hex_c = ''.join(c)
 
-        # write the ciphertext
+        # retourne le message chiffré
         return hex(B1), hex(B2), hex_c, hex(v)
 
     @staticmethod
-    def decipher(message):
+    def decrypt():
         """
-            Decipher the message with the private key
-            Args:
-                stream -- bytes -- the text to decipher
-            return the decipher message
+        Déchiffre le message qui a été précédemment chiffré
         """
         # read the private and public keys
-        p, _, _, _, _, _ = [int(v) for v in read_file(FILE_NAME + '.pub', 'outputs').split(',')]
-        x1, x2, y1, y2, w = [int(v) for v in read_file(FILE_NAME, 'outputs').split(',')]
+        p, _, _, _, _, _ = read_list_from_file('files/cramershoup_key.pub')
+        x1, x2, y1, y2, w = read_list_from_file('files/cramershoup_key')
         # read the cipher stream
-        b1, b2, c, v = message.split(',')
+        b1, b2, c, v = read_hex_list_from_file("files/cramershoup_soupe.txt")
         b1, b2, v = int(b1, 16), int(b2, 16), int(v, 16)
         m = [int(c[i:i+258], 16) for i in range(0, len(c), 258)]
         # verification
@@ -208,4 +231,3 @@ class CramerShoup(object):
 
         # On renvoit le message dechiffre
         return text.decode('utf-8')
-

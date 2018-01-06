@@ -107,3 +107,4 @@ def writeFile(filename, bytes):
     file = open(filename, "wb")
     file.write(bytes)
     file.close()
+    return True
